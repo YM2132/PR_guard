@@ -3,6 +3,7 @@ import os
 import sys
 import json
 import subprocess
+import requests
 
 def get_openai_api_key() -> str:
     key = (
@@ -44,6 +45,31 @@ def get_diff(base_sha: str, head_sha: str) -> str:
     )
     return result.stdout
 
+def github_headers() -> dict:
+    token = os.environ.get("GITHUB_TOKEN")
+    if not token:
+        raise RuntimeError("GITHUB_TOKEN not set")
+    return {
+        "Authorization": f"Bearer {token}",
+        "Accept": "application/vnd.github+json",
+    }
+
+def list_comments(repo: str, pr_number: int) -> list[dict]:
+    url = f"https://api.github.com/repos/{repo}/issues/{pr_number}/comments"
+    resp = requests.get(url, headers=github_headers(), timeout=30)
+    resp.raise_for_status()
+    return resp.json()
+
+def post_comment(repo: str, pr_number: int, body: str) -> None:
+    url = f"https://api.github.com/repos/{repo}/issues/{pr_number}/comments"
+    resp = requests.post(
+        url,
+        headers=github_headers(),
+        json={"body": body},
+        timeout=30,
+    )
+    resp.raise_for_status()
+
 def main() -> None:
     # TODO:
     # 1. Load GitHub event JSON from GITHUB_EVENT_PATH
@@ -63,12 +89,22 @@ def main() -> None:
         print("OpenAI API key found. PR guard will run here.")
         # Placeholder for now:
         # Just fail so you can see the check in GitHub.
+
         event_json = load_github_event()
         ctx = get_pr_context(event_json)
         print("PR context:", ctx)
+
         diff = get_diff(ctx["base_sha"], ctx["head_sha"])
         print("Diff length:", len(diff))
         print(diff[:500])
+
+        # sanity check if we can fetch comments
+        comments = list_comments(ctx["repo"], ctx["pr_number"])
+        print(f"Existing comments: {len(comments)}")
+
+        # Post a test comment
+        post_comment(ctx["repo"], ctx["pr_number"], "Hello from pr_guard.py :wave:")
+        print("Posted test comment.")
 
         sys.exit(1)
     except Exception as e:
