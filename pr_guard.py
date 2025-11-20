@@ -4,8 +4,9 @@ import sys
 import json
 import subprocess
 import requests
+from openai import OpenAI
 
-def get_openai_api_key() -> str:
+def get_openai_api_key() -> None:
     key = (
         os.environ.get("PR_GUARD_OPENAI_API_KEY")
         or os.environ.get("OPENAI_API_KEY")
@@ -15,7 +16,7 @@ def get_openai_api_key() -> str:
             "No OpenAI API key found. "
             "Set PR_GUARD_OPENAI_API_KEY or OPENAI_API_KEY."
         )
-    return key
+    return None
 
 def load_github_event():
     event_path = os.environ.get("GITHUB_EVENT_PATH")
@@ -70,27 +71,21 @@ def post_comment(repo: str, pr_number: int, body: str) -> None:
     )
     resp.raise_for_status()
 
-def call_llm(messages: list[dict], model: str | None = None) -> str:
-    api_key = get_openai_api_key()
+def call_llm(messages: list[str], model: str | None = None) -> str:
     if model is None:
         model = os.environ.get("OPENAI_MODEL", "gpt-5-mini")
 
-    resp = requests.post(
-        "https://api.openai.com/v1/chat/completions",
-        headers={
-            "Authorization": f"Bearer {api_key}",
-            "Content-Type": "application/json",
-        },
-        json={
-            "model": model,
-            "messages": messages,
-            "temperature": 0.2,
-        },
-        timeout=60,
+    client = OpenAI(api_key=os.environ["PR_UNDERSTANDING_OPENAI_API_KEY"])
+    completion = client.chat.completions.create(
+        model=model,
+        temperature=0.2,
+        messages=[
+            {"role": "developer", "content": f"{messages[0]}"},
+            {"role": "user", "content": f"{messages[1]}"},
+        ]
     )
-    resp.raise_for_status()
-    data = resp.json()
-    return data["choices"][0]["message"]["content"]
+
+    return completion["choices"][0]["message"]["content"]
 
 def main() -> None:
     # TODO:
@@ -107,7 +102,8 @@ def main() -> None:
     #    - Call OpenAI to evaluate answers
     #    - exit(0) or exit(1)
     try:
-        _ = get_openai_api_key()
+        # Try to get OpenAI API to check it exists
+        get_openai_api_key()
         print("OpenAI API key found. PR guard will run here.")
 
         event_json = load_github_event()
@@ -128,8 +124,8 @@ def main() -> None:
 
         msg = call_llm(
             [
-                {"role": "system", "content": "You say hi in one short sentence."},
-                {"role": "user", "content": "Say hi to the PR author."},
+                "You say hi in one short sentence.",
+                "Say hi to the PR author.",
             ]
         )
         print("LLM replied:", msg)
