@@ -75,7 +75,7 @@ def call_llm(messages: list[str], model: str | None = None) -> str:
     if model is None:
         model = os.environ.get("OPENAI_MODEL", "gpt-5-mini")
 
-    client = OpenAI(api_key=os.environ["PR_UNDERSTANDING_OPENAI_API_KEY"])
+    client = OpenAI(api_key=os.environ["PR_GUARD_OPENAI_API_KEY"])
     completion = client.chat.completions.create(
         model=model,
         temperature=0.2,
