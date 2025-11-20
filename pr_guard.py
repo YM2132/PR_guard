@@ -68,6 +68,7 @@ def main() -> None:
         print("PR context:", ctx)
         diff = get_diff(ctx["base_sha"], ctx["head_sha"])
         print("Diff length:", len(diff))
+        print(diff[:500])
 
         sys.exit(1)
     except Exception as e:
