@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import os
 import sys
-
+import json
 
 def get_openai_api_key() -> str:
     key = (
@@ -14,6 +14,25 @@ def get_openai_api_key() -> str:
             "Set PR_GUARD_OPENAI_API_KEY or OPENAI_API_KEY."
         )
     return key
+
+def load_github_event():
+    event_path = os.environ.get("GITHUB_EVENT_PATH")
+    if not event_path:
+        raise RuntimeError("GITHUB_EVENT_PATH not set.")
+    with open(event_path, "r", encoding="utf-8") as event_file:
+        return json.load(event_file)
+
+def get_pr_context(event_json):
+    pr = event_json.get("pull_request")
+    if not pr:
+        raise RuntimeError("This action must run on a pull request event.")
+
+    return {
+        "repo": os.environ["GITHUB_REPOSITORY"],  # "owner/repo"
+        "pr_number": event_json["number"],
+        "base_sha": pr["base"]["sha"],
+        "head_sha": pr["head"]["sha"],
+    }
 
 
 def main() -> None:
@@ -35,6 +54,10 @@ def main() -> None:
         print("OpenAI API key found. PR guard will run here.")
         # Placeholder for now:
         # Just fail so you can see the check in GitHub.
+        event_json = load_github_event()
+        ctx = get_pr_context(event_json)
+        print("PR context:", ctx)
+
         sys.exit(1)
     except Exception as e:
         print(f"Error: {e}")
