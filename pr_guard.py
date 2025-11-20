@@ -78,7 +78,6 @@ def call_llm(messages: list[str], model: str | None = None) -> str:
     client = OpenAI(api_key=os.environ["PR_GUARD_OPENAI_API_KEY"])
     completion = client.chat.completions.create(
         model=model,
-        temperature=0.2,
         messages=[
             {"role": "developer", "content": f"{messages[0]}"},
             {"role": "user", "content": f"{messages[1]}"},
