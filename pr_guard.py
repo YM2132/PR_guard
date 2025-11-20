@@ -2,6 +2,7 @@
 import os
 import sys
 import json
+import subprocess
 
 def get_openai_api_key() -> str:
     key = (
@@ -34,6 +35,14 @@ def get_pr_context(event_json):
         "head_sha": pr["head"]["sha"],
     }
 
+def get_diff(base_sha: str, head_sha: str) -> str:
+    result = subprocess.run(
+        ["git", "diff", f"{base_sha}...{head_sha}"],
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    return result.stdout
 
 def main() -> None:
     # TODO:
@@ -57,6 +66,8 @@ def main() -> None:
         event_json = load_github_event()
         ctx = get_pr_context(event_json)
         print("PR context:", ctx)
+        diff = get_diff(ctx["base_sha"], ctx["head_sha"])
+        print("Diff length:", len(diff))
 
         sys.exit(1)
     except Exception as e:
