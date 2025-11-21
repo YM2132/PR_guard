@@ -71,20 +71,17 @@ def post_comment(repo: str, pr_number: int, body: str) -> None:
     )
     resp.raise_for_status()
 
-def call_llm(messages: list[str], model: str | None = None) -> str:
+def call_llm(msgs: list[dict[str, str]], model: str | None = None) -> str:
     if model is None:
         model = os.environ.get("OPENAI_MODEL", "gpt-5-mini")
 
     client = OpenAI(api_key=os.environ["PR_GUARD_OPENAI_API_KEY"])
     completion = client.chat.completions.create(
         model=model,
-        messages=[
-            {"role": "developer", "content": f"{messages[0]}"},
-            {"role": "user", "content": f"{messages[1]}"},
-        ]
+        messages=msgs
     )
 
-    return completion["choices"][0]["message"]["content"]
+    return completion.choices[0].message.content
 
 def main() -> None:
     # TODO:
@@ -123,8 +120,8 @@ def main() -> None:
 
         msg = call_llm(
             [
-                "You say hi in one short sentence.",
-                "Say hi to the PR author.",
+                {"role": "developer", "content": "You say hi in one short sentence."},
+                {"role": "user", "content": "Say hi to the PR author."}
             ]
         )
         print("LLM replied:", msg)
