@@ -11,6 +11,7 @@ from pydantic import BaseModel
 from openai import OpenAI
 
 QUESTIONS_MARKER = "pr-guard:questions"
+RESULT_MARKER = "pr-guard:result"
 
 def get_openai_api_key() -> str:
     key = (
@@ -103,7 +104,7 @@ def call_llm_structured(
 def generate_questions(diff: str) -> list[str]:
     system_msg = (
         "You help review pull requests. Your goal is to ensure the developer understands the code they have written.\n"
-        "Given a git diff, write 3-5 short, concrete questions that probe:\n"
+        "Given a git diff, write 3 short, concrete questions that probe:\n"
         "- why the change is made,\n"
         "- what can go wrong,\n"
         "- how it was validated.\n"
@@ -125,7 +126,6 @@ def generate_questions(diff: str) -> list[str]:
 
 class QuestionsOutput(BaseModel):
     questions: list[str]
-
 
 class EvaluationOutput(BaseModel):
     decision: Literal["PASS", "FAIL"]
@@ -205,6 +205,23 @@ def evaluate_answers(diff: str, questions: list[str], answers_text: str) -> dict
 
     return {"decision": parsed.decision, "reason": parsed.reason}
 
+def find_result_comment(comments: list[dict]) -> dict | None:
+    for c in reversed(comments):  # newest first
+        body = c.get("body") or ""
+        if RESULT_MARKER in body:
+            return c
+    return None
+
+def update_comment(repo: str, comment_id: int, body: str) -> None:
+    url = f"https://api.github.com/repos/{repo}/issues/comments/{comment_id}"
+    resp = requests.patch(
+        url,
+        headers=github_headers(),
+        json={"body": body},
+        timeout=30,
+    )
+    resp.raise_for_status()
+
 
 client = OpenAI(api_key=get_openai_api_key())
 
@@ -259,6 +276,21 @@ def main() -> None:
         evaluation = evaluate_answers(diff, questions, answers_comment["body"])
         print(f"LLM decision: {evaluation['decision']}")
         print(f"Reason: {evaluation['reason']}")
+
+        # Build result comment body, with a hidden marker so we can find/update it
+        result_comment_body = (
+            f"### PR Guard Result: **{evaluation['decision']}**\n\n"
+            f"{evaluation['reason']}\n\n"
+            f"<!-- {RESULT_MARKER} -->"
+        )
+
+        existing_result = find_result_comment(comments)
+        if existing_result is None:
+            post_comment(ctx["repo"], ctx["pr_number"], result_comment_body)
+            print("Posted PR Guard result comment.")
+        else:
+            update_comment(ctx["repo"], existing_result["id"], result_comment_body)
+            print("Updated existing PR Guard result comment.")
 
         if evaluation["decision"] == "PASS":
             sys.exit(0)
