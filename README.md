@@ -38,6 +38,8 @@ Cost comes into the why, time of reviewers is not cheap whereas LLMs are becomin
 | Large | 500-1000 lines | ~$0.006-0.010 |
 | Huge | >1000 lines | ~$0.015+ |
 
+*Pricing changes over time — check OpenAI’s pricing page for exact numbers.</text>
+
 ---
 
 ### What it does
