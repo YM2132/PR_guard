@@ -182,10 +182,23 @@ def find_answers_comment(comments: list[dict]) -> dict | None:
 
 def evaluate_answers(diff: str, questions: list[str], answers_text: str) -> dict:
     system_msg = (
-        "You evaluate whether a pull request author appears to understand their change.\n"
+        "You evaluate whether a pull request author appears to understand THEIR OWN change.\n"
         "You are given a git diff, some questions about the diff, and the author's answers.\n"
-        "Return a decision of PASS if they clearly understand the change and reference the concrete code, "
-        "or FAIL if the answers are vague, generic, or disconnected from the diff."
+        "\n"
+        "Your job is NOT to judge whether the change is ideal engineering practice.\n"
+        "Your job IS to judge whether the author:\n"
+        "- refers concretely to the code and behavior in the diff,\n"
+        "- addresses the specific questions in a reasonably direct way,\n"
+        "- and shows some awareness of tradeoffs or limitations (even if they accept them).\n"
+        "\n"
+        "Use these rules:\n"
+        "- PASS if the answers clearly reference the actual code and show some thought about behavior, risks, or testing, "
+        "even if the design or justification is simple or acknowledges shortcuts.\n"
+        "- PASS if the author explicitly acknowledges limitations or context (e.g. 'this is a throwaway script', "
+        "'we know it's not thread-safe but it's only used in a single-process tool').\n"
+        "- FAIL only if the answers are mostly generic, ignore the questions, contradict the diff, "
+        "or clearly indicate the author has not actually looked at the code or considered its behavior.\n"
+        "- When in doubt, especially for very small or toy diffs, prefer PASS and mention any concerns in the reason."
     )
 
     user_msg = (
