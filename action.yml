@@ -6,6 +6,10 @@ inputs:
   openai_api_key:
     description: "OpenAI API key used to call the model"
     required: true
+  model:
+    description: "OpenAI model to use"
+    required: false
+    default: "gpt-5-mini"
 
 runs:
   using: "composite"
