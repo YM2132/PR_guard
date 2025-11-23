@@ -6,7 +6,7 @@ It doesn’t try to detect or ban AI generated code. Instead, it:
 
 - Generates three focused **questions about the diff**
 - Makes the author answer them in plain language
-- And then judge's whether the answers show the author understands the code submitted
+- And then judges whether the answers show the author understands the code submitted
 
 If they pass, the check goes green and humans can review. If not, the bot explains why and blocks until the author thinks a bit harder.
 
@@ -28,7 +28,7 @@ PR Guard supports **responsible AI-assisted programming**:
 
 ***Cost***
 
-Cost comes into the why, time of reviewers is not cheap whereas LLMs are becoming too cheap to meter. The default model, gpt-5-mini comes at a cost of 0.250$ for 1mn input tokens, for code that looks like:
+Cost comes into the why, time of reviewers is not cheap whereas LLMs are becoming too cheap to meter. The default model, gpt-5-mini comes at a cost of $0.250 for 1M input tokens, for code that looks like:
 
 | PR Size | Lines Changed | Estimated Cost |
 |---------|--------------|----------------|
