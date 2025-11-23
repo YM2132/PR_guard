@@ -28,4 +28,4 @@ runs:
         OPENAI_MODEL: ${{ inputs.model }}
         GITHUB_TOKEN: ${{ github.token }}
       run: |
-        python pr_guard.py
+        python "${{ github.action_path }}/pr_guard.py"
