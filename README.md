@@ -127,7 +127,9 @@ That’s all you need to start using PR Guard!
 
 Is there an override?
 - Yes, this is not a hard and fast rule. It is up to the maintainers to assert how pr-guard is to be used. In case of failure of the tool to work properly, a reviewer could choose to ignore the status of pr-guard
-- Can I re-author a /answers comment if it fails? Yes, you can change your answers and then restart the failed job
+
+Can I re-author a /answers comment if it fails?
+- Yes, you can change your answers and then restart the failed job
 
 ### Roadmap
 
