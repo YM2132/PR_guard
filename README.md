@@ -133,6 +133,9 @@ Is there an override?
 Can I re-author a /answers comment if it fails?
 - Yes, you can change your answers and then restart the failed job
 
+Can't someone just use AI to answer the questions?
+- Yes, and that's okay. PR Guard is not trying to ban AI — it's trying to make AI-assisted work more responsible. Even if answers are AI-assisted, the author still has to read and submit them, which forces a brief pause to consider the change, the risks, and the tests. Like any trust-based system, it can't guarantee zero AI, but it raises the bar and nudges people toward actually engaging with their own PRs
+
 ### Roadmap
 
 1. Increase developer configurability 
